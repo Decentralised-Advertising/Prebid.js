@@ -1,8 +1,8 @@
-import { config } from '../src/config.js';
-import { registerBidder } from '../src/adapters/bidderFactory.js';
-import { BANNER, VIDEO } from '../src/mediaTypes.js';
+import { config } from "../src/config.js";
+import { registerBidder } from "../src/adapters/bidderFactory.js";
+import { BANNER, VIDEO } from "../src/mediaTypes.js";
 
-const BIDDER_CODE = 'galaxy';
+const BIDDER_CODE = "galaxy";
 
 export const spec = {
   code: BIDDER_CODE,
@@ -23,20 +23,34 @@ export const spec = {
    * @return ServerRequest Info describing the request to the server.
    */
   buildRequests: function (bidRequests, bidderRequest) {
+    // Get currency from config
+    const currency = config.getConfig("currency.adServerCurrency");
+
+    // Publisher domain from config
+    const publisherDomain = config.getConfig("publisherDomain");
+
+    // First-party data from config
+    const fpd = config.getConfig("fpd");
+
     return {
-      method: 'POST',
-      url: `${config.getConfig('galaxy.endpoint')}/${config.getConfig('galaxy.organization')}`,
-      data: JSON.stringify(bidderRequest),
+      method: "POST",
+      url: `${config.getConfig("galaxy.endpoint")}/${config.getConfig(
+        "galaxy.organization"
+      )}`,
+      data: JSON.stringify({
+        ...bidderRequest,
+        ext: { currency, publisherDomain, fpd },
+      }),
       options: {
-        contentType: 'application/json',
-      }
+        contentType: "application/json",
+      },
     };
   },
   interpretResponse: function (serverResponse, bidRequest) {
     if (
       !serverResponse ||
       !serverResponse.body ||
-      typeof serverResponse.body !== 'object'
+      typeof serverResponse.body !== "object"
     ) {
       return [];
     }
@@ -48,12 +62,5 @@ export const spec = {
     }
     return [];
   },
-   /**
-   * Add element selector to javascript tracker to improve native viewability
-   * @param {Bid} bid
-   */
-  onBidWon: function(bid) {
-    console.log("BID WON:", bid);
-  }
 };
 registerBidder(spec);
